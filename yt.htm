@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Embed URL to iframe</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family:Segoe UI, Roboto, Arial, sans-serif; padding:20px; }
+    .row { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    input[type="url"] { flex:1; padding:8px; font-size:14px; }
+    button { padding:8px 12px; font-size:14px; }
+    .err { color:#a00; font-size:13px; margin-top:6px; }
+    .preview { margin-top:14px; }
+  </style>
+</head>
+<body>
+  <label for="embedUrl">Paste embed URL (e.g. https://www.youtube.com/embed/VIDEO_ID):</label>
+  <div class="row">
+    <input id="embedUrl" type="url" placeholder="https://..." />
+    <button id="applyBtn">Embed</button>
+  </div>
+  <div id="msg" class="err" aria-live="polite"></div>
+
+  <div class="preview" id="preview">
+    <!-- iframe will be updated here -->
+    <iframe id="player"
+      width="914" height="514"
+      src=""
+      title="Lost in the pulse"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen></iframe>
+  </div>
+
+  <script>
+    const input = document.getElementById('embedUrl');
+    const btn = document.getElementById('applyBtn');
+    const msg = document.getElementById('msg');
+    const iframe = document.getElementById('player');
+
+    function validUrl(u) {
+      try {
+        const p = new URL(u);
+        return p.protocol === 'http:' || p.protocol === 'https:';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function applyUrl() {
+      const url = input.value.trim();
+      if (!url) {
+        msg.textContent = 'Please paste a URL.';
+        return;
+      }
+      if (!validUrl(url)) {
+        msg.textContent = 'Invalid URL. Use a full URL starting with http:// or https://';
+        return;
+      }
+      msg.textContent = '';
+      iframe.src = url;
+    }
+
+    btn.addEventListener('click', applyUrl);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyUrl(); });
+  </script>
+</body>
+</html>
