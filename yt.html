@@ -34,9 +34,21 @@
       // Clear the previous iframe if it exists
       videoContainer.innerHTML = '';
 
-      // Validate and insert the iframe
+      // Validate and process the iframe
       if (embedCode.includes('<iframe') && embedCode.includes('src="https://www.youtube.com/embed/')) {
-        videoContainer.innerHTML = embedCode;
+        // Extract the iframe tag
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = embedCode.trim();
+        const iframe = tempDiv.querySelector('iframe');
+
+        if (iframe) {
+          // Modify the src attribute to remove the list query parameter
+          let src = iframe.getAttribute('src');
+          src = src.replace(/\?list=[^&]+/, ''); // Remove ?list=...
+
+          iframe.setAttribute('src', src);
+          videoContainer.appendChild(iframe);
+        }
       } else {
         alert('Please paste a valid YouTube embed code.');
       }
