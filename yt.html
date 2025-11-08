@@ -1,69 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Embed URL to iframe</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Embed Preview</title>
   <style>
-    body { font-family:Segoe UI, Roboto, Arial, sans-serif; padding:20px; }
-    .row { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
-    input[type="url"] { flex:1; padding:8px; font-size:14px; }
-    button { padding:8px 12px; font-size:14px; }
-    .err { color:#a00; font-size:13px; margin-top:6px; }
-    .preview { margin-top:14px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-bottom: 10px;
+    }
+    iframe {
+      display: block;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <label for="embedUrl">Paste embed URL (e.g. https://www.youtube.com/embed/VIDEO_ID):</label>
-  <div class="row">
-    <input id="embedUrl" type="url" placeholder="https://..." />
-    <button id="applyBtn">Embed</button>
-  </div>
-  <div id="msg" class="err" aria-live="polite"></div>
-
-  <div class="preview" id="preview">
-    <!-- iframe will be updated here -->
-    <iframe id="player"
-      width="914" height="514"
-      src=""
-      title="Lost in the pulse"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerpolicy="strict-origin-when-cross-origin"
-      allowfullscreen></iframe>
-  </div>
+  <h1>YouTube Embed Preview</h1>
+  <textarea id="embedCode" placeholder="Paste your YouTube embed code here"></textarea>
+  <button id="previewButton">Preview Video</button>
+  <div id="videoContainer"></div>
 
   <script>
-    const input = document.getElementById('embedUrl');
-    const btn = document.getElementById('applyBtn');
-    const msg = document.getElementById('msg');
-    const iframe = document.getElementById('player');
+    document.getElementById('previewButton').addEventListener('click', function() {
+      const embedCode = document.getElementById('embedCode').value;
+      const videoContainer = document.getElementById('videoContainer');
 
-    function validUrl(u) {
-      try {
-        const p = new URL(u);
-        return p.protocol === 'http:' || p.protocol === 'https:';
-      } catch (e) {
-        return false;
-      }
-    }
+      // Clear the previous iframe if it exists
+      videoContainer.innerHTML = '';
 
-    function applyUrl() {
-      const url = input.value.trim();
-      if (!url) {
-        msg.textContent = 'Please paste a URL.';
-        return;
+      // Validate and insert the iframe
+      if (embedCode.includes('<iframe') && embedCode.includes('src="https://www.youtube.com/embed/')) {
+        videoContainer.innerHTML = embedCode;
+      } else {
+        alert('Please paste a valid YouTube embed code.');
       }
-      if (!validUrl(url)) {
-        msg.textContent = 'Invalid URL. Use a full URL starting with http:// or https://';
-        return;
-      }
-      msg.textContent = '';
-      iframe.src = url;
-    }
-
-    btn.addEventListener('click', applyUrl);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyUrl(); });
+    });
   </script>
 </body>
 </html>
