@@ -7,16 +7,21 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .row { margin-bottom: 10px; }
-    input[type="text"] { width: 560px; padding: 8px; }
+    input[type="text"] { width: 100%; max-width: 560px; padding: 8px; box-sizing: border-box; }
     button { padding: 8px 12px; }
-    #embedContainer iframe { display:block; margin-top:12px; max-width:100%; }
+
+    /* responsive 16:9 wrapper so iframe keeps correct aspect ratio and scales */
+    .video-wrap { position: relative; width: 100%; max-width: 914px; margin-top:12px; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+    .video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+    #embedContainer iframe { display:block; max-width:100%; }
     .error { color: #b00; margin-top:8px; }
   </style>
 </head>
 <body>
   <div class="row">
-    <label for="ytUrl">YouTube URL or ID:</label><br />
-    <input id="ytUrl" type="text" placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID" />
+    <label for="ytUrl">Paste YouTube URL or ID:</label><br />
+    <input id="ytUrl" type="text" placeholder="https://youtu.be/VIDEO_ID" />
     <button id="genBtn">Generate Embed</button>
   </div>
 
@@ -65,10 +70,9 @@
       return fallback ? fallback[1] : null;
     }
 
-    function buildEmbedIframe(id, width = 914, height = 514) {
+    function buildEmbedIframe(id /*, width = 914, height = 514 */) {
       const iframe = document.createElement('iframe');
-      iframe.width = String(width);
-      iframe.height = String(height);
+      // Let CSS control width/height for responsiveness — don't set width/height attributes
       iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(id);
       iframe.title = '';
       iframe.frameBorder = '0';
@@ -96,7 +100,13 @@
       }
 
       const iframe = buildEmbedIframe(id);
-      container.appendChild(iframe);
+
+      // wrap iframe in responsive container
+      const wrap = document.createElement('div');
+      wrap.className = 'video-wrap';
+      wrap.appendChild(iframe);
+
+      container.appendChild(wrap);
     }
 
     btn.addEventListener('click', generate);
