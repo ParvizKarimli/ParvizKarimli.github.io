@@ -17,6 +17,7 @@
     iframe {
       display: block;
       margin-top: 10px;
+      max-width: 100%;
     }
   </style>
 </head>
@@ -28,30 +29,45 @@
 
   <script>
     document.getElementById('previewButton').addEventListener('click', function() {
-      const embedCode = document.getElementById('embedCode').value;
+      const embedCode = document.getElementById('embedCode').value.trim();
       const videoContainer = document.getElementById('videoContainer');
 
-      // Clear the previous iframe if it exists
       videoContainer.innerHTML = '';
 
-      // Validate and process the iframe
-      if (embedCode.includes('<iframe') && embedCode.includes('src="https://www.youtube.com/embed/')) {
-        // Extract the iframe tag
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = embedCode.trim();
-        const iframe = tempDiv.querySelector('iframe');
-
-        if (iframe) {
-          // Modify the src attribute to remove the list query parameter
-          let src = iframe.getAttribute('src');
-          src = src.replace(/\?list=[^&]+/, ''); // Remove ?list=...
-
-          iframe.setAttribute('src', src);
-          videoContainer.appendChild(iframe);
-        }
-      } else {
+      // quick validation
+      if (!embedCode.includes('<iframe') || !embedCode.includes('src="https://www.youtube.com/embed/')) {
         alert('Please paste a valid YouTube embed code.');
+        return;
       }
+
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = embedCode;
+      const iframe = tempDiv.querySelector('iframe');
+
+      if (!iframe) {
+        alert('Could not find an iframe in the pasted code.');
+        return;
+      }
+
+      const src = iframe.getAttribute('src') || '';
+      // Extract the video ID following /embed/ and keep only base URL
+      const match = src.match(/\/embed\/([A-Za-z0-9_-]+)(?:[?&\/]|$)/);
+
+      if (!match || !match[1]) {
+        alert('Could not extract video ID from the embed URL.');
+        return;
+      }
+
+      const videoId = match[1];
+      const cleanSrc = 'https://www.youtube.com/embed/' + videoId;
+      iframe.setAttribute('src', cleanSrc);
+
+      // Optionally ensure allowfullscreen attribute is present
+      if (!iframe.hasAttribute('allowfullscreen')) {
+        iframe.setAttribute('allowfullscreen', '');
+      }
+
+      videoContainer.appendChild(iframe);
     });
   </script>
 </body>
