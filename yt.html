@@ -1,73 +1,115 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Embed Preview</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YouTube Embed Generator</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      margin-bottom: 10px;
-    }
-    iframe {
-      display: block;
-      margin-top: 10px;
-      max-width: 100%;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .row { margin-bottom: 10px; }
+    input[type="text"] { width: 560px; padding: 8px; }
+    button { padding: 8px 12px; }
+    #embedContainer iframe { display:block; margin-top:12px; max-width:100%; height:auto; }
+    .error { color: #b00; margin-top:8px; }
   </style>
 </head>
 <body>
-  <h1>YouTube Embed Preview</h1>
-  <textarea id="embedCode" placeholder="Paste your YouTube embed code here"></textarea>
-  <button id="previewButton">Preview Video</button>
-  <div id="videoContainer"></div>
+  <div class="row">
+    <label for="ytUrl">YouTube URL or ID:</label><br />
+    <input id="ytUrl" type="text" placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID" />
+    <button id="genBtn">Generate Embed</button>
+  </div>
+
+  <div id="embedContainer" aria-live="polite"></div>
+  <div id="msg" class="error" role="status" aria-live="assertive"></div>
 
   <script>
-    document.getElementById('previewButton').addEventListener('click', function() {
-      const embedCode = document.getElementById('embedCode').value.trim();
-      const videoContainer = document.getElementById('videoContainer');
+    // Extract a YouTube video ID from many common input forms
+    function extractYouTubeID(input) {
+      if (!input) return null;
+      input = input.trim();
 
-      videoContainer.innerHTML = '';
+      const plainIdMatch = input.match(/^[A-Za-z0-9_-]{11}$/);
+      if (plainIdMatch) return plainIdMatch[0];
 
-      // quick validation
-      if (!embedCode.includes('<iframe') || !embedCode.includes('src="https://www.youtube.com/embed/')) {
-        alert('Please paste a valid YouTube embed code.');
+      try {
+        const url = new URL(input);
+        const host = url.hostname.toLowerCase();
+
+        if (host === 'youtu.be') {
+          const id = url.pathname.split('/').filter(Boolean)[0];
+          return id ? id.split(/[?#&]/)[0] : null;
+        }
+
+        if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
+          const v = url.searchParams.get('v');
+          if (v) return v.split(/[?#&]/)[0];
+
+          const pathParts = url.pathname.split('/').filter(Boolean);
+          const embedIndex = pathParts.indexOf('embed');
+          if (embedIndex !== -1 && pathParts[embedIndex + 1]) {
+            return pathParts[embedIndex + 1].split(/[?#&]/)[0];
+          }
+
+          const vIndex = pathParts.indexOf('v');
+          if (vIndex !== -1 && pathParts[vIndex + 1]) {
+            return pathParts[vIndex + 1].split(/[?#&]/)[0];
+          }
+        }
+      } catch (e) {
+        // Alert not a valid URL, proceed to fallback
+        alert('Invalid URL format. Please enter a valid YouTube URL or ID.');
+      }
+
+      const fallback = input.match(/([A-Za-z0-9_-]{11})/);
+      return fallback ? fallback[1] : null;
+    }
+
+    function buildEmbedIframe(id, width = 914, height = 514) {
+      const iframe = document.createElement('iframe');
+      iframe.width = String(width);
+      iframe.height = String(height);
+      iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(id);
+      iframe.title = '';
+      iframe.frameBorder = '0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allowFullscreen = true;
+      return iframe;
+    }
+
+    const input = document.getElementById('ytUrl');
+    const btn = document.getElementById('genBtn');
+    const container = document.getElementById('embedContainer');
+    const msg = document.getElementById('msg');
+
+    function generate() {
+      msg.textContent = '';
+      container.innerHTML = '';
+
+      const value = input.value;
+      const id = extractYouTubeID(value);
+
+      if (!id) {
+        msg.textContent = 'Could not extract a valid YouTube video ID. Paste a full URL or the 11-character ID.';
         return;
       }
 
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = embedCode;
-      const iframe = tempDiv.querySelector('iframe');
+      const iframe = buildEmbedIframe(id);
+      container.appendChild(iframe);
+    }
 
-      if (!iframe) {
-        alert('Could not find an iframe in the pasted code.');
-        return;
+    btn.addEventListener('click', generate);
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        generate();
       }
+    });
 
-      const src = iframe.getAttribute('src') || '';
-      // Extract the video ID following /embed/ and keep only base URL
-      const match = src.match(/\/embed\/([A-Za-z0-9_-]+)(?:[?&\/]|$)/);
-
-      if (!match || !match[1]) {
-        alert('Could not extract video ID from the embed URL.');
-        return;
-      }
-
-      const videoId = match[1];
-      const cleanSrc = 'https://www.youtube.com/embed/' + videoId;
-      iframe.setAttribute('src', cleanSrc);
-
-      // Optionally ensure allowfullscreen attribute is present
-      if (!iframe.hasAttribute('allowfullscreen')) {
-        iframe.setAttribute('allowfullscreen', '');
-      }
-
-      videoContainer.appendChild(iframe);
+    input.addEventListener('paste', function () {
+      setTimeout(generate, 50);
     });
   </script>
 </body>
